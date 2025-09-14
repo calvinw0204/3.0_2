@@ -25,29 +25,26 @@
          device-orientation-permission-ui="enabled: true"
          embedded>
   <a-assets>
-    <!-- checkpoint0 用 GIF -->
-    <img id="checkpoint0Gif" src="HONGKONG-FOOD.gif">
-
-    <!-- 另外兩個用模型 -->
+    <a-asset-item id="checkpoint0Model" src="checkpoint0.glb"></a-asset-item>
     <a-asset-item id="checkpoint1Model" src="checkpoint1.glb"></a-asset-item>
     <a-asset-item id="checkpoint2Model" src="checkpoint2.glb"></a-asset-item>
   </a-assets>
 
   <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <!-- Marker 0：Gif -->
+  <!-- Marker 0 -->
   <a-entity mindar-image-target="targetIndex: 0" id="checkpoint-0">
-    <a-image src="#checkpoint0Gif" position="0 0 0.1" width="20" height="12"></a-image>
+    <a-gltf-model src="#checkpoint0Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
     <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
   </a-entity>
 
-  <!-- Marker 1：GLB -->
+  <!-- Marker 1 -->
   <a-entity mindar-image-target="targetIndex: 1" id="checkpoint-1">
     <a-gltf-model src="#checkpoint1Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
     <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
   </a-entity>
 
-  <!-- Marker 2：GLB -->
+  <!-- Marker 2 -->
   <a-entity mindar-image-target="targetIndex: 2" id="checkpoint-2">
     <a-gltf-model src="#checkpoint2Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
     <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
@@ -70,6 +67,7 @@ const markers = [
 const input = document.getElementById("userMessage");
 const saveBtn = document.getElementById("saveBtn");
 
+// 每個 marker 的獨立留言列表
 let messages = {};
 markers.forEach(m => {
   messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["歡迎來到景點！","拍照留念~"]');
@@ -104,6 +102,7 @@ function showBarrageMessage(msg, containerId) {
   setTimeout(() => container.removeChild(bg), 8500);
 }
 
+// 自動輪播彈幕
 markers.forEach(m => {
   let idx = 0;
   setInterval(() => {
@@ -112,6 +111,7 @@ markers.forEach(m => {
   }, 3000);
 });
 
+// Marker 找到 / 消失事件
 markers.forEach(m => {
   const markerEl = document.getElementById(m.id);
   markerEl.addEventListener("targetFound", () => {
@@ -128,6 +128,7 @@ markers.forEach(m => {
   });
 });
 
+// 送出留言
 saveBtn.addEventListener("click", () => {
   if(!activeMarkerId) return;
   const msg = input.value.trim();
@@ -143,4 +144,3 @@ input.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); 
 </script>
 </body>
 </html>
-
