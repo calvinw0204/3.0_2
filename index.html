@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>Welcome AR Multi-Marker</title>
+  <title>Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.css" />
@@ -24,33 +24,14 @@
       padding: 8px 16px;
       font-size: 16px;
     }
-
-    /* 中央掃描正方形 */
-    #scan-box {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 200px;
-      height: 200px;
-      margin-left: -100px;
-      margin-top: -100px;
-      border: 3px solid white;
-      box-sizing: border-box;
-      pointer-events: none;
-      z-index: 5;
-    }
-
-    /* 隱藏 MindAR loading 圓圈 */
-    .mindar-ui {
+    /* 隱藏 loading 圓圈，但保留掃描正方形 */
+    .mindar-ui .mindar-loading {
       display: none !important;
     }
   </style>
 </head>
 <body>
-  <!-- 中央掃描正方形 -->
-  <div id="scan-box"></div>
-
-  <a-scene mindar-image="imageTargetSrc: cat-marker.mind; autoStart: true; uiLoading: false; uiScanning: false;" 
+  <a-scene mindar-image="imageTargetSrc: cat-marker.mind; autoStart: true; uiLoading: false; uiScanning: true;" 
            vr-mode-ui="enabled: false"
            device-orientation-permission-ui="enabled: true"
            embedded>
@@ -72,36 +53,41 @@
       <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
     </a-entity>
 
+    <!-- Marker 2 -->
+    <a-entity mindar-image-target="targetIndex: 2" id="marker-2">
+      <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
+      <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
+    </a-entity>
+
   </a-scene>
 
   <div id="input-container">
     <input type="text" id="userMessage" placeholder="掃描 marker 後可留言..." disabled />
-    <button id="saveBtn" disabled>Send!</button>
+    <button id="saveBtn" disabled>新增留言</button>
   </div>
 
   <script>
     const markers = [
       { id: "marker-0", barrageId: "barrage-0" },
       { id: "marker-1", barrageId: "barrage-1" },
+      { id: "marker-2", barrageId: "barrage-2" },
     ];
 
     const input = document.getElementById("userMessage");
     const saveBtn = document.getElementById("saveBtn");
-    const scanBox = document.getElementById("scan-box");
 
-    // 讀取 localStorage，每個 marker 獨立存
+    // 每個 marker 獨立留言
     let messages = {};
     markers.forEach(m => {
       messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["你好呀！", "黑貓陪住你~"]');
     });
 
-    // 當前操作 marker
+    // 當前 active marker
     let activeMarkerId = null;
 
     // 彈幕顯示 function
     function showBarrageMessage(msg, containerId) {
       const container = document.getElementById(containerId);
-
       const bg = document.createElement("a-plane");
       bg.setAttribute("color", "black");
       bg.setAttribute("opacity", "0.7");
@@ -147,14 +133,12 @@
         activeMarkerId = m.id;
         input.disabled = false;
         saveBtn.disabled = false;
-        scanBox.style.display = "none"; // 隱藏掃描正方形
       });
       markerEl.addEventListener("targetLost", () => {
         if(activeMarkerId === m.id) {
           activeMarkerId = null;
           input.disabled = true;
           saveBtn.disabled = true;
-          scanBox.style.display = "block"; // 顯示掃描正方形
         }
       });
     });
