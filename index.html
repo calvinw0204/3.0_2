@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Demo</title>
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.css" />
+  <meta charset="UTF-8">
+  <title>AR.js 黑貓彈幕留言 Demo</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.rawgit.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    body, html { margin: 0; padding: 0; overflow: hidden; }
     #input-container {
       position: absolute;
       bottom: 10px;
@@ -15,149 +14,120 @@
       text-align: center;
       z-index: 10;
     }
-    #userMessage {
-      width: 60%;
-      padding: 8px;
-      font-size: 16px;
-    }
-    #saveBtn {
-      padding: 8px 16px;
-      font-size: 16px;
-    }
-    /* 隱藏 loading 圓圈，但保留掃描正方形 */
-    .mindar-ui .mindar-loading {
-      display: none !important;
-    }
+    #userMessage { width: 60%; padding: 8px; font-size: 16px; }
+    #saveBtn { padding: 8px 16px; font-size: 16px; }
   </style>
 </head>
 <body>
-  <a-scene mindar-image="imageTargetSrc: cat-marker.mind; autoStart: true; uiLoading: false; uiScanning: true;" 
-           vr-mode-ui="enabled: false"
-           device-orientation-permission-ui="enabled: true"
-           embedded>
-    <a-assets>
-      <a-asset-item id="catModel" src="cat.glb"></a-asset-item>
-    </a-assets>
+<a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+  <a-assets>
+    <a-asset-item id="catModel" src="cat.glb"></a-asset-item>
+  </a-assets>
 
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-camera></a-camera>
 
-    <!-- Marker 0 -->
-    <a-entity mindar-image-target="targetIndex: 0" id="marker-0">
-      <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-      <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
-    </a-entity>
+  <!-- Marker 0 -->
+  <a-marker type="pattern" url="hiro.patt" id="marker-0">
+    <a-gltf-model src="#catModel" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+    <a-entity id="barrage-0" position="0 1 0"></a-entity>
+  </a-marker>
 
-    <!-- Marker 1 -->
-    <a-entity mindar-image-target="targetIndex: 1" id="marker-1">
-      <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-      <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
-    </a-entity>
+  <!-- Marker 1 -->
+  <a-marker type="pattern" url="marker1.patt" id="marker-1">
+    <a-gltf-model src="#catModel" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+    <a-entity id="barrage-1" position="0 1 0"></a-entity>
+  </a-marker>
 
-    <!-- Marker 2 -->
-    <a-entity mindar-image-target="targetIndex: 2" id="marker-2">
-      <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-      <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
-    </a-entity>
+  <!-- Marker 2 -->
+  <a-marker type="pattern" url="marker2.patt" id="marker-2">
+    <a-gltf-model src="#catModel" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+    <a-entity id="barrage-2" position="0 1 0"></a-entity>
+  </a-marker>
+</a-scene>
 
-  </a-scene>
+<div id="input-container">
+  <input type="text" id="userMessage" placeholder="掃描 marker 後留言..." disabled>
+  <button id="saveBtn" disabled>新增留言</button>
+</div>
 
-  <div id="input-container">
-    <input type="text" id="userMessage" placeholder="掃描 marker 後可留言..." disabled />
-    <button id="saveBtn" disabled>新增留言</button>
-  </div>
+<script>
+const markers = [
+  { id: "marker-0", barrageId: "barrage-0" },
+  { id: "marker-1", barrageId: "barrage-1" },
+  { id: "marker-2", barrageId: "barrage-2" },
+];
 
-  <script>
-    const markers = [
-      { id: "marker-0", barrageId: "barrage-0" },
-      { id: "marker-1", barrageId: "barrage-1" },
-      { id: "marker-2", barrageId: "barrage-2" },
-    ];
+const input = document.getElementById("userMessage");
+const saveBtn = document.getElementById("saveBtn");
 
-    const input = document.getElementById("userMessage");
-    const saveBtn = document.getElementById("saveBtn");
+let messages = {};
+markers.forEach(m => {
+  messages[m.id] = JSON.parse(localStorage.getItem("barrage_" + m.id) || '["你好呀！","黑貓陪住你~"]');
+});
 
-    // 每個 marker 獨立留言
-    let messages = {};
-    markers.forEach(m => {
-      messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["你好呀！", "黑貓陪住你~"]');
-    });
+let activeMarkerId = null;
 
-    // 當前 active marker
-    let activeMarkerId = null;
+function showBarrageMessage(msg, containerId) {
+  const container = document.getElementById(containerId);
+  const bg = document.createElement("a-plane");
+  bg.setAttribute("color", "black");
+  bg.setAttribute("opacity", "0.7");
+  bg.setAttribute("height", "0.3");
+  bg.setAttribute("width", "2.5");
+  const randomY = (Math.random() - 0.5);
+  bg.setAttribute("position", `0 ${randomY} 0`);
 
-    // 彈幕顯示 function
-    function showBarrageMessage(msg, containerId) {
-      const container = document.getElementById(containerId);
-      const bg = document.createElement("a-plane");
-      bg.setAttribute("color", "black");
-      bg.setAttribute("opacity", "0.7");
-      bg.setAttribute("height", "0.3");
-      bg.setAttribute("width", "3.5");
+  const text = document.createElement("a-text");
+  text.setAttribute("value", msg);
+  text.setAttribute("color", "white");
+  text.setAttribute("align", "center");
+  text.setAttribute("width", "2.2");
+  text.setAttribute("position", "0 0 0.01");
+  bg.appendChild(text);
+  container.appendChild(bg);
 
-      const lines = [0.5, 0.3, 0, -0.3, -0.5];
-      const randomY = lines[Math.floor(Math.random() * lines.length)];
-      bg.setAttribute("position", `3.5 ${randomY} 0`);
+  setTimeout(()=>container.removeChild(bg), 4000);
+}
 
-      const text = document.createElement("a-text");
-      text.setAttribute("value", msg);
-      text.setAttribute("color", "white");
-      text.setAttribute("align", "center");
-      text.setAttribute("width", "3");
-      text.setAttribute("position", "0 0 0.01");
-      text.setAttribute("wrap-count", "40");
+// 自動輪播彈幕
+markers.forEach(m => {
+  let idx = 0;
+  setInterval(() => {
+    showBarrageMessage(messages[m.id][idx], m.barrageId);
+    idx = (idx + 1) % messages[m.id].length;
+  }, 3000);
+});
 
-      bg.appendChild(text);
-      container.appendChild(bg);
-
-      bg.setAttribute("animation__move", `property: position; from: 3.5 ${randomY} 0; to: -3.5 ${randomY} 0; dur: 8000; easing: linear`);
-      bg.setAttribute("animation__fade", `property: opacity; from: 0.7; to: 0; dur: 500; delay: 7500; easing: linear`);
-
-      setTimeout(() => {
-        if(container.contains(bg)) container.removeChild(bg);
-      }, 8000);
+// marker 找到 / 消失事件
+markers.forEach(m => {
+  const el = document.getElementById(m.id);
+  el.addEventListener("markerFound", () => {
+    activeMarkerId = m.id;
+    input.disabled = false;
+    saveBtn.disabled = false;
+  });
+  el.addEventListener("markerLost", () => {
+    if(activeMarkerId === m.id){
+      activeMarkerId = null;
+      input.disabled = true;
+      saveBtn.disabled = true;
     }
+  });
+});
 
-    // 自動輪播彈幕
-    markers.forEach(m => {
-      let idx = 0;
-      setInterval(() => {
-        showBarrageMessage(messages[m.id][idx], m.barrageId);
-        idx = (idx + 1) % messages[m.id].length;
-      }, 3000);
-    });
+// 新增留言
+saveBtn.addEventListener("click", () => {
+  if(!activeMarkerId) return;
+  const msg = input.value.trim();
+  if(msg !== ""){
+    messages[activeMarkerId].push(msg);
+    if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
+    localStorage.setItem("barrage_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
+    input.value="";
+  }
+});
 
-    // Marker 找到 / 消失事件
-    markers.forEach(m => {
-      const markerEl = document.getElementById(m.id);
-      markerEl.addEventListener("targetFound", () => {
-        activeMarkerId = m.id;
-        input.disabled = false;
-        saveBtn.disabled = false;
-      });
-      markerEl.addEventListener("targetLost", () => {
-        if(activeMarkerId === m.id) {
-          activeMarkerId = null;
-          input.disabled = true;
-          saveBtn.disabled = true;
-        }
-      });
-    });
-
-    // 送出留言
-    saveBtn.addEventListener("click", () => {
-      if(!activeMarkerId) return;
-      const msg = input.value.trim();
-      if(msg !== "") {
-        messages[activeMarkerId].push(msg);
-        if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
-        localStorage.setItem("barrageMessages_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
-        input.value = "";
-      }
-    });
-
-    input.addEventListener("keydown", (e) => {
-      if(e.key === "Enter") saveBtn.click();
-    });
-  </script>
+input.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); });
+</script>
 </body>
 </html>
