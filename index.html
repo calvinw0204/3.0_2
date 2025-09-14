@@ -1,146 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>旅行景點 AR 彈幕留言 Demo</title>
+  <title>MindAR 多 Marker 留言板 + GIF + GLB</title>
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-    #input-container {
+    body { margin: 0; overflow: hidden; }
+    #messageContainer {
       position: absolute;
-      bottom: 10px;
-      width: 100%;
-      text-align: center;
-      z-index: 10;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 80%;
+      max-width: 400px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      display: none;
     }
-    #userMessage { width: 60%; padding: 8px; font-size: 16px; }
-    #saveBtn { padding: 8px 16px; font-size: 16px; }
+    #messageList {
+      max-height: 100px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
-<a-scene mindar-image="imageTargetSrc: travel-target.mind; autoStart: true;" 
-         vr-mode-ui="enabled: false"
-         device-orientation-permission-ui="enabled: true"
-         embedded>
-  <a-assets>
-    <a-asset-item id="checkpoint0Model" src="checkpoint0.glb"></a-asset-item>
-    <a-asset-item id="checkpoint1Model" src="checkpoint1.glb"></a-asset-item>
-    <a-asset-item id="checkpoint2Model" src="checkpoint2.glb"></a-asset-item>
-  </a-assets>
+  <a-scene
+    mindar-image="imageTargetSrc: targets.mind"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-assets>
+      <!-- GIF for checkpoint0 -->
+      <img id="foodgif" src="HONGKONG-FOOD.gif" />
+      <!-- GLB 模型 for checkpoint1, checkpoint2 -->
+      <a-asset-item id="model1" src="checkpoint1.glb"></a-asset-item>
+      <a-asset-item id="model2" src="checkpoint2.glb"></a-asset-item>
+    </a-assets>
 
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <!-- checkpoint0: GIF + 留言板 -->
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-image src="#foodgif" width="1.5" height="1" position="0 0 0"></a-image>
+      <a-entity id="board0" position="0 1 0"></a-entity>
+    </a-entity>
 
-  <!-- Marker 0 -->
-  <a-entity mindar-image-target="targetIndex: 0" id="checkpoint-0">
-    <a-gltf-model src="#checkpoint0Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+    <!-- checkpoint1: GLB + 留言板 -->
+    <a-entity mindar-image-target="targetIndex: 1">
+      <a-gltf-model src="#model1" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+      <a-entity id="board1" position="0 1 0"></a-entity>
+    </a-entity>
 
-  <!-- Marker 1 -->
-  <a-entity mindar-image-target="targetIndex: 1" id="checkpoint-1">
-    <a-gltf-model src="#checkpoint1Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+    <!-- checkpoint2: GLB + 留言板 -->
+    <a-entity mindar-image-target="targetIndex: 2">
+      <a-gltf-model src="#model2" position="0 0 0" scale="0.5 0.5 0.5"></a-gltf-model>
+      <a-entity id="board2" position="0 1 0"></a-entity>
+    </a-entity>
 
-  <!-- Marker 2 -->
-  <a-entity mindar-image-target="targetIndex: 2" id="checkpoint-2">
-    <a-gltf-model src="#checkpoint2Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+    <a-camera position="0 0 0" look-controls="enabled: true"></a-camera>
+  </a-scene>
 
-</a-scene>
+  <!-- 留言輸入區 (浮動 HTML) -->
+  <div id="messageContainer">
+    <div id="messageList"></div>
+    <input type="text" id="messageInput" placeholder="輸入留言..." />
+    <button id="sendBtn">送出</button>
+  </div>
 
-<div id="input-container">
-  <input type="text" id="userMessage" placeholder="掃描 marker 後留言..." disabled />
-  <button id="saveBtn" disabled>新增留言</button>
-</div>
+  <script>
+    const messageContainer = document.getElementById("messageContainer");
+    const messageList = document.getElementById("messageList");
+    const messageInput = document.getElementById("messageInput");
+    const sendBtn = document.getElementById("sendBtn");
 
-<script>
-const markers = [
-  { id: "checkpoint-0", barrageId: "barrage-0" },
-  { id: "checkpoint-1", barrageId: "barrage-1" },
-  { id: "checkpoint-2", barrageId: "barrage-2" },
-];
+    // 每個 checkpoint 都有獨立留言
+    let boards = {
+      0: {el: document.getElementById("board0"), messages: []},
+      1: {el: document.getElementById("board1"), messages: []},
+      2: {el: document.getElementById("board2"), messages: []}
+    };
+    let activeBoard = null;
 
-const input = document.getElementById("userMessage");
-const saveBtn = document.getElementById("saveBtn");
-
-// 每個 marker 的獨立留言列表
-let messages = {};
-markers.forEach(m => {
-  messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["歡迎來到景點！","拍照留念~"]');
-});
-
-let activeMarkerId = null;
-
-function showBarrageMessage(msg, containerId) {
-  const container = document.getElementById(containerId);
-  const bg = document.createElement("a-plane");
-  bg.setAttribute("color", "black");
-  bg.setAttribute("opacity", "0.7");
-  bg.setAttribute("height", "0.3");
-  bg.setAttribute("width", "3.5");
-
-  const randomY = (Math.random() - 0.5) * 0.8;
-  bg.setAttribute("position", `3.5 ${randomY} 0`);
-
-  const text = document.createElement("a-text");
-  text.setAttribute("value", msg);
-  text.setAttribute("color", "white");
-  text.setAttribute("align", "center");
-  text.setAttribute("width", "3");
-  text.setAttribute("position", "0 0 0.01");
-  text.setAttribute("wrap-count", "40");
-
-  bg.appendChild(text);
-  container.appendChild(bg);
-
-  bg.setAttribute("animation", `property: position; from: 3.5 ${randomY} 0; to: -3.5 ${randomY} 0; dur: 8000; easing: linear`);
-
-  setTimeout(() => container.removeChild(bg), 8500);
-}
-
-// 自動輪播彈幕
-markers.forEach(m => {
-  let idx = 0;
-  setInterval(() => {
-    showBarrageMessage(messages[m.id][idx], m.barrageId);
-    idx = (idx + 1) % messages[m.id].length;
-  }, 3000);
-});
-
-// Marker 找到 / 消失事件
-markers.forEach(m => {
-  const markerEl = document.getElementById(m.id);
-  markerEl.addEventListener("targetFound", () => {
-    activeMarkerId = m.id;
-    input.disabled = false;
-    saveBtn.disabled = false;
-  });
-  markerEl.addEventListener("targetLost", () => {
-    if(activeMarkerId === m.id){
-      activeMarkerId = null;
-      input.disabled = true;
-      saveBtn.disabled = true;
+    function renderMessages(boardId) {
+      messageList.innerHTML = "";
+      boards[boardId].messages.forEach(msg => {
+        const div = document.createElement("div");
+        div.textContent = msg;
+        messageList.appendChild(div);
+      });
     }
-  });
-});
 
-// 送出留言
-saveBtn.addEventListener("click", () => {
-  if(!activeMarkerId) return;
-  const msg = input.value.trim();
-  if(msg !== ""){
-    messages[activeMarkerId].push(msg);
-    if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
-    localStorage.setItem("barrageMessages_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
-    input.value="";
-  }
-});
+    sendBtn.addEventListener("click", () => {
+      if (!activeBoard) return;
+      const msg = messageInput.value.trim();
+      if (msg) {
+        boards[activeBoard].messages.push(msg);
+        renderMessages(activeBoard);
+        messageInput.value = "";
+      }
+    });
 
-input.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); });
-</script>
+    messageInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") sendBtn.click();
+    });
+
+    // Marker events
+    [0,1,2].forEach(i => {
+      const marker = document.querySelector(`[mindar-image-target="targetIndex: ${i}"]`);
+      marker.addEventListener("targetFound", () => {
+        activeBoard = i;
+        messageContainer.style.display = "block";
+        renderMessages(i);
+      });
+      marker.addEventListener("targetLost", () => {
+        if (activeBoard === i) {
+          activeBoard = null;
+          messageContainer.style.display = "none";
+        }
+      });
+    });
+  </script>
 </body>
 </html>
