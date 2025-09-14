@@ -24,130 +24,156 @@
       padding: 8px 16px;
       font-size: 16px;
     }
+
+    /* 中央掃描正方形 */
+    #scan-box {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200px;
+      height: 200px;
+      margin-left: -100px;
+      margin-top: -100px;
+      border: 3px solid white;
+      box-sizing: border-box;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* 隱藏 MindAR loading 圓圈 */
+    .mindar-ui {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
-<a-scene mindar-image="imageTargetSrc: cat-marker.mind; autoStart: true;" 
-         vr-mode-ui="enabled: false"
-         device-orientation-permission-ui="enabled: true"
-         embedded>
-  <a-assets>
-    <a-asset-item id="catModel" src="cat.glb"></a-asset-item>
-  </a-assets>
+  <!-- 中央掃描正方形 -->
+  <div id="scan-box"></div>
 
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <a-scene mindar-image="imageTargetSrc: cat-marker.mind; autoStart: true; uiLoading: false; uiScanning: false;" 
+           vr-mode-ui="enabled: false"
+           device-orientation-permission-ui="enabled: true"
+           embedded>
+    <a-assets>
+      <a-asset-item id="catModel" src="cat.glb"></a-asset-item>
+    </a-assets>
 
-  <!-- Marker 0 -->
-  <a-entity mindar-image-target="targetIndex: 0" id="marker-0">
-    <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <!-- Marker 1 -->
-  <a-entity mindar-image-target="targetIndex: 1" id="marker-1">
-    <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+    <!-- Marker 0 -->
+    <a-entity mindar-image-target="targetIndex: 0" id="marker-0">
+      <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
+      <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
+    </a-entity>
 
-</a-scene>
+    <!-- Marker 1 -->
+    <a-entity mindar-image-target="targetIndex: 1" id="marker-1">
+      <a-gltf-model src="#catModel" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
+      <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
+    </a-entity>
 
-<div id="input-container">
-  <input type="text" id="userMessage" placeholder="掃描 marker 後可留言..." disabled />
-  <button id="saveBtn" disabled>Send!</button>
-</div>
+  </a-scene>
 
-<script>
-const markers = [
-  { id: "marker-0", barrageId: "barrage-0" },
-  { id: "marker-1", barrageId: "barrage-1" },
-];
+  <div id="input-container">
+    <input type="text" id="userMessage" placeholder="掃描 marker 後可留言..." disabled />
+    <button id="saveBtn" disabled>Send!</button>
+  </div>
 
-const input = document.getElementById("userMessage");
-const saveBtn = document.getElementById("saveBtn");
+  <script>
+    const markers = [
+      { id: "marker-0", barrageId: "barrage-0" },
+      { id: "marker-1", barrageId: "barrage-1" },
+    ];
 
-// 讀取 localStorage，每個 marker 獨立存
-let messages = {};
-markers.forEach(m => {
-  messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["你好呀！", "黑貓陪住你~"]');
-});
+    const input = document.getElementById("userMessage");
+    const saveBtn = document.getElementById("saveBtn");
+    const scanBox = document.getElementById("scan-box");
 
-// 當前操作 marker
-let activeMarkerId = null;
+    // 讀取 localStorage，每個 marker 獨立存
+    let messages = {};
+    markers.forEach(m => {
+      messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["你好呀！", "黑貓陪住你~"]');
+    });
 
-// 彈幕顯示 function
-function showBarrageMessage(msg, containerId) {
-  const container = document.getElementById(containerId);
+    // 當前操作 marker
+    let activeMarkerId = null;
 
-  const bg = document.createElement("a-plane");
-  bg.setAttribute("color", "black");
-  bg.setAttribute("opacity", "0.7");
-  bg.setAttribute("height", "0.3");
-  bg.setAttribute("width", "3.5");
+    // 彈幕顯示 function
+    function showBarrageMessage(msg, containerId) {
+      const container = document.getElementById(containerId);
 
-  const lines = [0.5, 0.3, 0, -0.3, -0.5];
-  const randomY = lines[Math.floor(Math.random() * lines.length)];
-  bg.setAttribute("position", `3.5 ${randomY} 0`);
+      const bg = document.createElement("a-plane");
+      bg.setAttribute("color", "black");
+      bg.setAttribute("opacity", "0.7");
+      bg.setAttribute("height", "0.3");
+      bg.setAttribute("width", "3.5");
 
-  const text = document.createElement("a-text");
-  text.setAttribute("value", msg);
-  text.setAttribute("color", "white");
-  text.setAttribute("align", "center");
-  text.setAttribute("width", "3");
-  text.setAttribute("position", "0 0 0.01");
-  text.setAttribute("wrap-count", "40");
+      const lines = [0.5, 0.3, 0, -0.3, -0.5];
+      const randomY = lines[Math.floor(Math.random() * lines.length)];
+      bg.setAttribute("position", `3.5 ${randomY} 0`);
 
-  bg.appendChild(text);
-  container.appendChild(bg);
+      const text = document.createElement("a-text");
+      text.setAttribute("value", msg);
+      text.setAttribute("color", "white");
+      text.setAttribute("align", "center");
+      text.setAttribute("width", "3");
+      text.setAttribute("position", "0 0 0.01");
+      text.setAttribute("wrap-count", "40");
 
-  bg.setAttribute("animation__move", `property: position; from: 3.5 ${randomY} 0; to: -3.5 ${randomY} 0; dur: 8000; easing: linear`);
-  bg.setAttribute("animation__fade", `property: opacity; from: 0.7; to: 0; dur: 500; delay: 7500; easing: linear`);
+      bg.appendChild(text);
+      container.appendChild(bg);
 
-  setTimeout(() => {
-    if(container.contains(bg)) container.removeChild(bg);
-  }, 8000);
-}
+      bg.setAttribute("animation__move", `property: position; from: 3.5 ${randomY} 0; to: -3.5 ${randomY} 0; dur: 8000; easing: linear`);
+      bg.setAttribute("animation__fade", `property: opacity; from: 0.7; to: 0; dur: 500; delay: 7500; easing: linear`);
 
-// 自動輪播彈幕
-markers.forEach(m => {
-  let idx = 0;
-  setInterval(() => {
-    showBarrageMessage(messages[m.id][idx], m.barrageId);
-    idx = (idx + 1) % messages[m.id].length;
-  }, 3000);
-});
-
-// Marker 找到 / 消失事件
-markers.forEach(m => {
-  const markerEl = document.getElementById(m.id);
-  markerEl.addEventListener("targetFound", () => {
-    activeMarkerId = m.id;
-    input.disabled = false;
-    saveBtn.disabled = false;
-  });
-  markerEl.addEventListener("targetLost", () => {
-    if(activeMarkerId === m.id) {
-      activeMarkerId = null;
-      input.disabled = true;
-      saveBtn.disabled = true;
+      setTimeout(() => {
+        if(container.contains(bg)) container.removeChild(bg);
+      }, 8000);
     }
-  });
-});
 
-// 送出留言
-saveBtn.addEventListener("click", () => {
-  if(!activeMarkerId) return;
-  const msg = input.value.trim();
-  if(msg !== "") {
-    messages[activeMarkerId].push(msg);
-    if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
-    localStorage.setItem("barrageMessages_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
-    input.value = "";
-  }
-});
+    // 自動輪播彈幕
+    markers.forEach(m => {
+      let idx = 0;
+      setInterval(() => {
+        showBarrageMessage(messages[m.id][idx], m.barrageId);
+        idx = (idx + 1) % messages[m.id].length;
+      }, 3000);
+    });
 
-input.addEventListener("keydown", (e) => {
-  if(e.key === "Enter") saveBtn.click();
-});
-</script>
+    // Marker 找到 / 消失事件
+    markers.forEach(m => {
+      const markerEl = document.getElementById(m.id);
+      markerEl.addEventListener("targetFound", () => {
+        activeMarkerId = m.id;
+        input.disabled = false;
+        saveBtn.disabled = false;
+        scanBox.style.display = "none"; // 隱藏掃描正方形
+      });
+      markerEl.addEventListener("targetLost", () => {
+        if(activeMarkerId === m.id) {
+          activeMarkerId = null;
+          input.disabled = true;
+          saveBtn.disabled = true;
+          scanBox.style.display = "block"; // 顯示掃描正方形
+        }
+      });
+    });
+
+    // 送出留言
+    saveBtn.addEventListener("click", () => {
+      if(!activeMarkerId) return;
+      const msg = input.value.trim();
+      if(msg !== "") {
+        messages[activeMarkerId].push(msg);
+        if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
+        localStorage.setItem("barrageMessages_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
+        input.value = "";
+      }
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if(e.key === "Enter") saveBtn.click();
+    });
+  </script>
 </body>
 </html>
