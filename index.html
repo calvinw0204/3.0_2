@@ -2,12 +2,18 @@
 <html>
 <head>
   <meta charset="UTF-8" />
-  <title>旅行景點 AR 彈幕留言 Demo</title>
+  <title>旅行景點 AR SPA Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.css" />
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: sans-serif; }
+
+    /* 頁面容器 */
+    .page { display: none; width: 100%; height: 100%; }
+    #homePage, #rewardPage { display: flex; justify-content: center; align-items: center; font-size: 24px; }
+
+    /* input */
     #input-container {
       position: absolute;
       bottom: 10px;
@@ -17,62 +23,121 @@
     }
     #userMessage { width: 60%; padding: 8px; font-size: 16px; }
     #saveBtn { padding: 8px 16px; font-size: 16px; }
+
+    /* Hamburger Menu */
+    #menuToggle {
+      position: absolute;
+      top: 10px; left: 10px;
+      z-index: 20;
+      cursor: pointer;
+    }
+    #menuToggle div {
+      width: 30px; height: 4px; margin: 6px 0;
+      background-color: black;
+    }
+    #menu {
+      display: none;
+      position: absolute;
+      top: 50px; left: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 30;
+    }
+    #menu button {
+      display: block;
+      width: 120px;
+      margin: 5px 0;
+      padding: 8px;
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>
-<a-scene mindar-image="imageTargetSrc: travel-target.mind; autoStart: true;" 
-         vr-mode-ui="enabled: false"
-         device-orientation-permission-ui="enabled: true"
-         embedded>
-  <a-assets>
-    <a-asset-item id="checkpoint0Model" src="checkpoint0.glb"></a-asset-item>
-    <a-asset-item id="checkpoint1Model" src="checkpoint1.glb"></a-asset-item>
-    <a-asset-item id="checkpoint2Model" src="checkpoint2.glb"></a-asset-item>
-  </a-assets>
+  <!-- Hamburger Menu -->
+  <div id="menuToggle">
+    <div></div><div></div><div></div>
+  </div>
+  <div id="menu">
+    <button onclick="goTo('homePage')">🏠 主頁</button>
+    <button onclick="goTo('arPage')">📷 AR</button>
+    <button onclick="goTo('rewardPage')">🎁 Reward</button>
+  </div>
 
-  <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+  <!-- 主頁 -->
+  <div id="homePage" class="page" style="display:block;">
+    <h1>主頁 - 歡迎嚟到旅行體驗</h1>
+  </div>
 
-  <!-- Marker 0 -->
-  <a-entity mindar-image-target="targetIndex: 0" id="checkpoint-0">
-    <a-gltf-model src="#checkpoint0Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+  <!-- AR 頁 -->
+  <div id="arPage" class="page">
+    <a-scene mindar-image="imageTargetSrc: travel-target.mind; autoStart: true;"
+             vr-mode-ui="enabled: false"
+             device-orientation-permission-ui="enabled: true"
+             embedded>
+      <a-assets>
+        <a-asset-item id="checkpoint0Model" src="checkpoint0.glb"></a-asset-item>
+        <a-asset-item id="checkpoint1Model" src="checkpoint1.glb"></a-asset-item>
+        <a-asset-item id="checkpoint2Model" src="checkpoint2.glb"></a-asset-item>
+      </a-assets>
 
-  <!-- Marker 1 -->
-  <a-entity mindar-image-target="targetIndex: 1" id="checkpoint-1">
-    <a-gltf-model src="#checkpoint1Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-  <!-- Marker 2 -->
-  <a-entity mindar-image-target="targetIndex: 2" id="checkpoint-2">
-    <a-gltf-model src="#checkpoint2Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-    <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
-  </a-entity>
+      <!-- Marker 0 -->
+      <a-entity mindar-image-target="targetIndex: 0" id="checkpoint-0">
+        <a-gltf-model src="#checkpoint0Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
+        <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
+      </a-entity>
 
-</a-scene>
+      <!-- Marker 1 -->
+      <a-entity mindar-image-target="targetIndex: 1" id="checkpoint-1">
+        <a-gltf-model src="#checkpoint1Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
+        <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
+      </a-entity>
 
-<div id="input-container">
-  <input type="text" id="userMessage" placeholder="掃描 marker 後留言..." disabled />
-  <button id="saveBtn" disabled>新增留言</button>
-</div>
+      <!-- Marker 2 -->
+      <a-entity mindar-image-target="targetIndex: 2" id="checkpoint-2">
+        <a-gltf-model src="#checkpoint2Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
+        <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
+      </a-entity>
+    </a-scene>
+
+    <div id="input-container">
+      <input type="text" id="userMessage" placeholder="掃描 marker 後留言..." disabled />
+      <button id="saveBtn" disabled>新增留言</button>
+    </div>
+  </div>
+
+  <!-- Reward 頁 -->
+  <div id="rewardPage" class="page">
+    <h1>🎁 Reward - 完成任務解鎖獎勵！</h1>
+  </div>
 
 <script>
+/* --- SPA 切換邏輯 --- */
+function goTo(pageId){
+  document.querySelectorAll(".page").forEach(p => p.style.display="none");
+  document.getElementById(pageId).style.display="block";
+}
+
+/* Hamburger menu toggle */
+document.getElementById("menuToggle").addEventListener("click", () => {
+  const menu = document.getElementById("menu");
+  menu.style.display = menu.style.display === "block" ? "none" : "block";
+});
+
+/* --- AR 留言彈幕 --- */
 const markers = [
   { id: "checkpoint-0", barrageId: "barrage-0" },
   { id: "checkpoint-1", barrageId: "barrage-1" },
   { id: "checkpoint-2", barrageId: "barrage-2" },
 ];
-
 const input = document.getElementById("userMessage");
 const saveBtn = document.getElementById("saveBtn");
-
-// 每個 marker 的獨立留言列表
 let messages = {};
 markers.forEach(m => {
   messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["歡迎來到景點！","拍照留念~"]');
 });
-
 let activeMarkerId = null;
 
 function showBarrageMessage(msg, containerId) {
@@ -106,8 +171,10 @@ function showBarrageMessage(msg, containerId) {
 markers.forEach(m => {
   let idx = 0;
   setInterval(() => {
-    showBarrageMessage(messages[m.id][idx], m.barrageId);
-    idx = (idx + 1) % messages[m.id].length;
+    if(document.getElementById("arPage").style.display === "block"){ // 只喺AR頁面先播
+      showBarrageMessage(messages[m.id][idx], m.barrageId);
+      idx = (idx + 1) % messages[m.id].length;
+    }
   }, 3000);
 });
 
@@ -139,7 +206,6 @@ saveBtn.addEventListener("click", () => {
     input.value="";
   }
 });
-
 input.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); });
 </script>
 </body>
