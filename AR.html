@@ -8,65 +8,25 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.css" />
   <style>
     body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-
-    /* Hamburger Menu */
     .hamburger {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      z-index: 20;
-      cursor: pointer;
+      position: absolute; top: 15px; left: 15px; z-index: 20; cursor: pointer;
     }
-    .hamburger div {
-      width: 30px;
-      height: 4px;
-      background: white;
-      margin: 6px 0;
-      border-radius: 2px;
-    }
-    .menu {
-      position: absolute;
-      top: 0;
-      left: -200px;
-      width: 200px;
-      height: 100%;
-      background: rgba(0,0,0,0.85);
-      padding-top: 60px;
-      transition: left 0.3s;
-      z-index: 19;
-    }
-    .menu a {
-      display: block;
-      color: white;
-      padding: 12px;
-      text-decoration: none;
-      font-size: 18px;
-    }
-    .menu a:hover {
-      background: rgba(255,255,255,0.2);
-    }
-    .menu.show {
-      left: 0;
-    }
-
-    #input-container {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      text-align: center;
-      z-index: 10;
-    }
-    #userMessage { width: 60%; padding: 8px; font-size: 16px; }
-    #saveBtn { padding: 8px 16px; font-size: 16px; }
+    .hamburger div { width: 30px; height: 4px; background: white; margin: 6px 0; border-radius: 2px; }
+    .menu { position: absolute; top:0; left:-200px; width:200px; height:100%; background:rgba(0,0,0,0.85);
+           padding-top:60px; transition:left 0.3s; z-index:19; }
+    .menu a { display:block; color:white; padding:12px; text-decoration:none; font-size:18px; }
+    .menu a:hover { background: rgba(255,255,255,0.2); }
+    .menu.show { left:0; }
+    #input-container { position:absolute; bottom:10px; width:100%; text-align:center; z-index:10; }
+    #userMessage { width:60%; padding:8px; font-size:16px; }
+    #saveBtn { padding:8px 16px; font-size:16px; }
   </style>
 </head>
 <body>
 
 <!-- Hamburger Menu -->
 <div class="hamburger" onclick="toggleMenu()">
-  <div></div>
-  <div></div>
-  <div></div>
+  <div></div><div></div><div></div>
 </div>
 
 <div class="menu" id="menu">
@@ -112,9 +72,7 @@
 </div>
 
 <script>
-function toggleMenu(){
-  document.getElementById("menu").classList.toggle("show");
-}
+function toggleMenu(){ document.getElementById("menu").classList.toggle("show"); }
 
 const markers = [
   { id: "checkpoint-0", barrageId: "barrage-0" },
@@ -125,7 +83,6 @@ const markers = [
 const input = document.getElementById("userMessage");
 const saveBtn = document.getElementById("saveBtn");
 
-// 每個 marker 的獨立留言列表
 let messages = {};
 markers.forEach(m => {
   messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["歡迎來到景點！","拍照留念~"]');
@@ -169,7 +126,7 @@ markers.forEach(m => {
   }, 3000);
 });
 
-// Marker 找到 / 消失事件 & 更新 localStorage
+// Marker 找到 / 消失事件
 markers.forEach(m => {
   const markerEl = document.getElementById(m.id);
   markerEl.addEventListener("targetFound", () => {
@@ -177,9 +134,8 @@ markers.forEach(m => {
     input.disabled = false;
     saveBtn.disabled = false;
 
-    // 標記 checkpoint 完成
+    // 掃描 checkpoint 完成，立即更新 localStorage
     localStorage.setItem(m.id, "done");
-    console.log(m.id + " done!");
   });
   markerEl.addEventListener("targetLost", () => {
     if(activeMarkerId === m.id){
@@ -199,16 +155,14 @@ saveBtn.addEventListener("click", () => {
     if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
     localStorage.setItem("barrageMessages_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
 
-    // 留言完成任務 (只需一次)
+    // 留言完成一次
     localStorage.setItem("commentDone", "true");
-    console.log("留言完成，commentDone = true");
-
     input.value="";
   }
 });
 
 input.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); });
-</script>
 
+</script>
 </body>
 </html>
