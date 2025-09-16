@@ -1,55 +1,25 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Reward Page</title>
+  <meta charset="UTF-8" />
+  <title>Reward</title>
   <style>
-    body, html { margin:0; padding:20px; font-family:sans-serif; background:#f5f5f5; }
-
-    h1 { text-align:center; }
-
-    /* Hamburger Menu */
+    body, html { margin:0; padding:0; font-family: sans-serif; background:#f0f0f0; }
     .hamburger {
-      position: absolute;
-      top: 15px;
-      left: 15px;
-      z-index: 20;
-      cursor: pointer;
+      position: absolute; top: 15px; left: 15px; z-index: 20; cursor:pointer;
     }
-    .hamburger div {
-      width: 30px;
-      height: 4px;
-      background: black;
-      margin: 6px 0;
-      border-radius: 2px;
-    }
+    .hamburger div { width:30px; height:4px; background:black; margin:6px 0; border-radius:2px; }
     .menu {
-      position: absolute;
-      top: 0;
-      left: -200px;
-      width: 200px;
-      height: 100%;
-      background: rgba(0,0,0,0.85);
-      padding-top: 60px;
-      transition: left 0.3s;
-      z-index: 19;
+      position:absolute; top:0; left:-200px; width:200px; height:100%; background:rgba(0,0,0,0.85);
+      padding-top:60px; transition:left 0.3s; z-index:19;
     }
-    .menu a {
-      display: block;
-      color: white;
-      padding: 12px;
-      text-decoration: none;
-      font-size: 18px;
-    }
-    .menu a:hover {
-      background: rgba(255,255,255,0.2);
-    }
-    .menu.show {
-      left: 0;
-    }
+    .menu a { display:block; color:white; padding:12px; text-decoration:none; font-size:18px; }
+    .menu a:hover { background: rgba(255,255,255,0.2); }
+    .menu.show { left:0; }
 
-    .task { margin: 20px 0; font-size: 20px; }
-    .ok { color: green; font-weight: bold; margin-left: 10px; }
+    #tasks { padding: 60px 20px 20px 20px; }
+    .task { font-size:20px; margin-bottom:15px; }
+    button { padding:10px 20px; font-size:16px; margin-top:20px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -64,42 +34,50 @@
 <div class="menu" id="menu">
   <a href="index.html">Home</a>
   <a href="AR.html">AR</a>
-  <a href="reward.html" style="background:rgba(255,255,255,0.2)">Reward</a>
+  <a href="reward.html" style="background: rgba(255,255,255,0.2)">Reward</a>
 </div>
 
-<h1>Reward Page</h1>
+<div id="tasks">
+  <div class="task" id="task1">1. 掃三個 Check Point</div>
+  <div class="task" id="task2">2. 留一次言</div>
 
-<div class="task" id="task1">
-  1. 掃三個 Check Point
-</div>
-
-<div class="task" id="task2">
-  2. 留一次言
+  <button onclick="clearAll()">清除所有紀錄 (開發用)</button>
 </div>
 
 <script>
-function toggleMenu(){
+function toggleMenu() {
   document.getElementById("menu").classList.toggle("show");
 }
 
-// 讀取 localStorage 判斷 AR.html 任務完成情況
-const cp0 = localStorage.getItem('checkpoint-0') === 'done';
-const cp1 = localStorage.getItem('checkpoint-1') === 'done';
-const cp2 = localStorage.getItem('checkpoint-2') === 'done';
+// 判斷任務是否完成
+function updateTasks() {
+  const task1 = document.getElementById("task1");
+  const task2 = document.getElementById("task2");
 
-if(cp0 && cp1 && cp2){
-  const task1 = document.getElementById('task1');
-  task1.textContent += " OK!";
-  task1.classList.add('ok');
+  // 檢查 3 個 checkpoint 是否完成
+  const checkpointsDone = 
+    localStorage.getItem("checkpoint-0") === "done" &&
+    localStorage.getItem("checkpoint-1") === "done" &&
+    localStorage.getItem("checkpoint-2") === "done";
+
+  if(checkpointsDone) task1.textContent = "1. 掃三個 Check Point - OK!";
+
+  // 檢查留言任務是否完成
+  if(localStorage.getItem("commentDone") === "true") {
+    task2.textContent = "2. 留一次言 - OK!";
+  }
 }
 
-// 留言任務
-const commentDone = localStorage.getItem('commentDone') === 'true';
-if(commentDone){
-  const task2 = document.getElementById('task2');
-  task2.textContent += " OK!";
-  task2.classList.add('ok');
+// 開發用：清除 localStorage
+function clearAll() {
+  localStorage.clear();
+  updateTasks();
+  alert("所有紀錄已清除");
 }
+
+// 每秒檢查一次 localStorage 更新
+setInterval(updateTasks, 1000);
+updateTasks();
 </script>
 
 </body>
