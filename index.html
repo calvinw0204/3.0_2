@@ -1,314 +1,105 @@
 <!DOCTYPE html>
-<html lang="zh-HK">
+<html>
 <head>
   <meta charset="UTF-8" />
-  <title>Demo</title>
-
-  <!-- A-Frame + MindAR -->
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.css" />
-
+  <title>Home page</title>
   <style>
-    body, html { margin: 0; padding: 0; height: 100%; font-family: sans-serif; overflow: hidden; }
-    .page { display: none; height: 100%; width: 100%; }
-    .active { display: block; }
+    body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
 
-    /* Hamburger */
-    #hamburger { position: absolute; top: 15px; left: 15px; width: 30px; height: 25px; cursor: pointer; z-index: 9999; }
-    .bar { height: 4px; width: 100%; background: black; margin: 5px 0; border-radius: 2px; }
-    #menu { position: absolute; top: 0; left: -200px; width: 200px; height: 100%; background: rgba(0,0,0,0.85); color: white; padding-top: 60px; transition: left 0.3s; z-index: 9998; }
-    #menu a { display: block; padding: 15px; color: white; text-decoration: none; font-size: 18px; }
-    #menu a:hover { background: rgba(255,255,255,0.2); }
+    /* Hamburger Menu */
+    .hamburger {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 20;
+      cursor: pointer;
+    }
+    .hamburger div {
+      width: 30px;
+      height: 4px;
+      background: white;
+      margin: 6px 0;
+      border-radius: 2px;
+    }
+    .menu {
+      position: absolute;
+      top: 0;
+      left: -200px;
+      width: 200px;
+      height: 100%;
+      background: rgba(0,0,0,0.85);
+      padding-top: 60px;
+      transition: left 0.3s;
+      z-index: 19;
+    }
+    .menu a {
+      display: block;
+      color: white;
+      padding: 12px;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .menu a:hover {
+      background: rgba(255,255,255,0.2);
+    }
+    .menu.show {
+      left: 0;
+    }
 
-    /* Input container for AR */
-    #input-container { position: absolute; bottom: 10px; width: 100%; text-align: center; z-index: 10; }
-    #userMessage { width: 60%; padding: 8px; font-size: 16px; }
-    #saveBtn { padding: 8px 16px; font-size: 16px; }
-
-    /* SAFETY: 當不在 AR 狀態時，隱藏 A-Frame/MindAR 可能殘留的 overlay 元素 */
-    body.no-ar .a-canvas,
-    body.no-ar video,
-    body.no-ar .a-enter-vr,
-    body.no-ar .a-loader,
-    body.no-ar .a-loader-title,
-    body.no-ar .xrextras-full-window {
-      display: none !important;
-      visibility: hidden !important;
+    /* 開發用清除按鈕 */
+    #clearBtn {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      z-index: 10;
+      background: red;
+      color: white;
+      border: none;
+      border-radius: 5px;
     }
   </style>
 </head>
 <body>
 
-<!-- Hamburger -->
-<div id="hamburger" title="Menu">
-  <div class="bar"></div>
-  <div class="bar"></div>
-  <div class="bar"></div>
-</div>
-<div id="menu">
-  <a href="#" onclick="goTo('home')">Home</a>
-  <a href="#" onclick="goTo('ar')">AR</a>
-  <a href="#" onclick="goTo('reward')">Reward</a>
+<!-- Hamburger Menu -->
+<div class="hamburger" onclick="toggleMenu()">
+  <div></div>
+  <div></div>
+  <div></div>
 </div>
 
-<!-- Home Page -->
-<div id="home" class="page active" style="display:flex;justify-content:center;align-items:center;flex-direction:column;background:#f0f0f0;">
-  <h1>黑貓旅行 Demo</h1>
-  <p>掃描 marker 留言，探索旅程！</p>
-  <button onclick="goTo('ar')">Start AR</button>
+<div class="menu" id="menu">
+  <a href="index.html" style="background:rgba(255,255,255,0.2)">Home</a>
+  <a href="AR.html">AR</a>
+  <a href="reward.html">Reward</a>
 </div>
 
-<!-- AR Page (空容器，進入時動態生成 scene) -->
-<div id="ar" class="page"></div>
-
-<!-- Reward Page -->
-<div id="reward" class="page" style="display:flex;justify-content:center;align-items:center;flex-direction:column;background:#fff;">
-  <h2>Reward Page</h2>
-  <p id="reward-status">掃描或留言後解鎖！</p>
+<!-- 主頁主要內容 -->
+<div id="mainContent">
+  <!-- 可以放你主頁想顯示嘅內容，例如地圖、圖片、動畫等 -->
 </div>
+
+<!-- 開發用清除所有紀錄按鈕 -->
+<button id="clearBtn" onclick="clearAllRecords()">清除所有紀錄</button>
 
 <script>
-/* -----------------------
-   SPA 切換 & Hamburger
-   ----------------------- */
-function goTo(pageId){
-  // 隱藏所有 page
-  document.querySelectorAll(".page").forEach(p => { p.classList.remove("active"); p.style.display="none"; });
-  // 顯示目標 page
-  const el = document.getElementById(pageId);
-  el.classList.add("active");
-  el.style.display="block";
-
-  // AR page 特殊處理：動態載入 / 卸載 scene
-  if(pageId === "ar"){
-    // Remove the "no-ar" safety class so AR overlays can show
-    document.body.classList.remove("no-ar");
-    loadARScene();
-  } else {
-    // 加上 "no-ar" 隱藏任可殘留 overlay 元素（保守處理）
-    document.body.classList.add("no-ar");
-    unloadARScene();
-  }
-  closeMenu();
-}
-
-/* Hamburger toggle */
-const menu = document.getElementById("menu");
-document.getElementById("hamburger").onclick = () => {
-  if(menu.style.left === "0px"){ closeMenu(); } else { menu.style.left = "0px"; }
-};
-function closeMenu(){ menu.style.left = "-200px"; }
-
-
-
-window._barrageIntervals = [];         // 存 setInterval id
-window._barrageMarkerListeners = [];   // 存 {el, foundHandler, lostHandler}
-window._barrageSaveHandler = null;
-window._barrageInputHandler = null;
-
-function loadARScene(){
-  // already loaded?
-  if(document.querySelector("a-scene")) return;
-
-  // 注入 scene + input UI
-  document.getElementById("ar").innerHTML = `
-    <a-scene mindar-image="imageTargetSrc: travel-target.mind; autoStart: true;"
-             vr-mode-ui="enabled: false"
-             device-orientation-permission-ui="enabled: true"
-             embedded>
-      <a-assets>
-        <a-asset-item id="checkpoint0Model" src="checkpoint0.glb"></a-asset-item>
-        <a-asset-item id="checkpoint1Model" src="checkpoint1.glb"></a-asset-item>
-        <a-asset-item id="checkpoint2Model" src="checkpoint2.glb"></a-asset-item>
-      </a-assets>
-
-      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-      <a-entity mindar-image-target="targetIndex: 0" id="checkpoint-0">
-        <a-gltf-model src="#checkpoint0Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-        <a-entity id="barrage-0" position="0 1.1 0.1"></a-entity>
-      </a-entity>
-
-      <a-entity mindar-image-target="targetIndex: 1" id="checkpoint-1">
-        <a-gltf-model src="#checkpoint1Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-        <a-entity id="barrage-1" position="0 1.1 0.1"></a-entity>
-      </a-entity>
-
-      <a-entity mindar-image-target="targetIndex: 2" id="checkpoint-2">
-        <a-gltf-model src="#checkpoint2Model" position="0 0 0.1" scale="0.75 0.75 0.75"></a-gltf-model>
-        <a-entity id="barrage-2" position="0 1.1 0.1"></a-entity>
-      </a-entity>
-    </a-scene>
-
-    <div id="input-container">
-      <input type="text" id="userMessage" placeholder="掃描 marker 後留言..." disabled />
-      <button id="saveBtn" disabled>新增留言</button>
-    </div>
-  `;
-
-  // 初始化彈幕邏輯（會建立 intervals & listeners）
-  initBarrageLogic();
-}
-
-function unloadARScene(){
-  // 1) Clear intervals
-  if(Array.isArray(window._barrageIntervals)){
-    window._barrageIntervals.forEach(id => clearInterval(id));
-  }
-  window._barrageIntervals = [];
-
-  // 2) Remove marker listeners
-  if(Array.isArray(window._barrageMarkerListeners)){
-    window._barrageMarkerListeners.forEach(rec => {
-      try {
-        rec.el.removeEventListener('targetFound', rec.foundHandler);
-        rec.el.removeEventListener('targetLost', rec.lostHandler);
-      } catch(e){}
-    });
-  }
-  window._barrageMarkerListeners = [];
-
-  // 3) Remove input/save handlers if still present
-  if(window._barrageSaveHandler){
-    const saveBtn = document.getElementById("saveBtn");
-    if(saveBtn) saveBtn.removeEventListener("click", window._barrageSaveHandler);
-  }
-  if(window._barrageInputHandler){
-    const input = document.getElementById("userMessage");
-    if(input) input.removeEventListener("keydown", window._barrageInputHandler);
-  }
-  window._barrageSaveHandler = null;
-  window._barrageInputHandler = null;
-
-  // 4) Remove scene DOM (this also lets A-Frame / MindAR release camera)
-  const scene = document.querySelector("a-scene");
-  if(scene){
-    try { scene.parentNode.removeChild(scene); } catch(e) { scene.remove(); }
+  // Toggle hamburger menu
+  function toggleMenu() {
+    document.getElementById("menu").classList.toggle("show");
   }
 
-  // 5) Also remove the input container area (in case exists) to avoid dangling elements
-  const inputContainer = document.getElementById("input-container");
-  if(inputContainer) inputContainer.remove();
-
-  // 6) Safety: hide any possible leftover video/canvas by ensuring body has no-ar class (CSS above)
-  document.body.classList.add("no-ar");
-}
-
-/* ========== AR 彈幕邏輯 (會在每次 loadARScene 被呼叫時建立) ========== */
-function initBarrageLogic(){
-  // local markers config
-  const markers = [
-    { id: "checkpoint-0", barrageId: "barrage-0" },
-    { id: "checkpoint-1", barrageId: "barrage-1" },
-    { id: "checkpoint-2", barrageId: "barrage-2" },
-  ];
-
-  // get DOM elements (input and save newly created inside #ar)
-  const input = document.getElementById("userMessage");
-  const saveBtn = document.getElementById("saveBtn");
-  if(!input || !saveBtn){
-    console.warn("AR input UI not present yet.");
-    return;
-  }
-
-  // prepare messages per marker (persistent via localStorage)
-  let messages = {};
-  markers.forEach(m => {
-    messages[m.id] = JSON.parse(localStorage.getItem("barrageMessages_" + m.id) || '["歡迎來到景點！","拍照留念~"]');
-  });
-
-  let activeMarkerId = null;
-
-  // helper: render one barrage text (same as before)
-  function showBarrageMessage(msg, containerId) {
-    const container = document.getElementById(containerId);
-    if(!container) return;
-    const bg = document.createElement("a-plane");
-    bg.setAttribute("color", "black");
-    bg.setAttribute("opacity", "0.7");
-    bg.setAttribute("height", "0.3");
-    bg.setAttribute("width", "3.5");
-    const randomY = (Math.random() - 0.5) * 0.8;
-    bg.setAttribute("position", `3.5 ${randomY} 0`);
-    const text = document.createElement("a-text");
-    text.setAttribute("value", msg);
-    text.setAttribute("color", "white");
-    text.setAttribute("align", "center");
-    text.setAttribute("width", "3");
-    text.setAttribute("position", "0 0 0.01");
-    text.setAttribute("wrap-count", "40");
-    bg.appendChild(text);
-    container.appendChild(bg);
-    bg.setAttribute("animation", `property: position; from: 3.5 ${randomY} 0; to: -3.5 ${randomY} 0; dur: 8000; easing: linear`);
-    setTimeout(() => { if(container.contains(bg)) container.removeChild(bg); }, 8500);
-  }
-
-  // 1) start intervals for auto-rotation of messages; 保存 interval ids 以便 later 清除
-  markers.forEach(m => {
-    let idx = 0;
-    const id = setInterval(() => {
-      // only show if container exists (scene mounted and AR page still active)
-      if(document.getElementById(m.barrageId)){
-        // defensive: ensure messages array non-empty
-        if(Array.isArray(messages[m.id]) && messages[m.id].length){
-          showBarrageMessage(messages[m.id][idx], m.barrageId);
-          idx = (idx + 1) % messages[m.id].length;
-        }
-      }
-    }, 3000);
-    window._barrageIntervals.push(id);
-  });
-
-  // 2) add marker found/lost listeners,並把 listener refs 存起以便卸載時移除
-  markers.forEach(m => {
-    const markerEl = document.getElementById(m.id);
-    if(!markerEl) return;
-    const foundHandler = () => {
-      activeMarkerId = m.id;
-      input.disabled = false;
-      saveBtn.disabled = false;
-      document.getElementById("reward-status").innerText = "✅ 已解鎖獎勵！";
-    };
-    const lostHandler = () => {
-      if(activeMarkerId === m.id){
-        activeMarkerId = null;
-        input.disabled = true;
-        saveBtn.disabled = true;
-      }
-    };
-    markerEl.addEventListener("targetFound", foundHandler);
-    markerEl.addEventListener("targetLost", lostHandler);
-    window._barrageMarkerListeners.push({ el: markerEl, foundHandler, lostHandler });
-  });
-
-  // 3) add save handler & keydown handler; store to globals so can remove later
-  const saveHandler = () => {
-    if(!activeMarkerId) return;
-    const msg = input.value.trim();
-    if(msg !== ""){
-      messages[activeMarkerId].push(msg);
-      if(messages[activeMarkerId].length > 50) messages[activeMarkerId].shift();
-      localStorage.setItem("barrageMessages_" + activeMarkerId, JSON.stringify(messages[activeMarkerId]));
-      input.value = "";
-      document.getElementById("reward-status").innerText = "✅ 已解鎖獎勵！";
+  // 清除 localStorage 所有紀錄 (包含彈幕留言、checkpoint、留言)
+  function clearAllRecords() {
+    if(confirm("確定要清除所有紀錄嗎？")) {
+      localStorage.clear();
+      alert("已清除所有紀錄！");
     }
-  };
-  const inputHandler = (e) => { if(e.key === "Enter") saveHandler(); };
-
-  saveBtn.addEventListener("click", saveHandler);
-  input.addEventListener("keydown", inputHandler);
-
-  // save references for cleanup
-  window._barrageSaveHandler = saveHandler;
-  window._barrageInputHandler = inputHandler;
-}
-
-/* 初始進入 home（確保 no-ar） */
-document.body.classList.add("no-ar");
-goTo("home");
-
+  }
 </script>
+
 </body>
 </html>
-
