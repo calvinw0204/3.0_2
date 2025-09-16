@@ -49,34 +49,41 @@ function toggleMenu() {
   document.getElementById("menu").classList.toggle("show");
 }
 
-// 判斷任務是否完成
+// 更新任務狀態
 function updateTasks() {
   const task1 = document.getElementById("task1");
   const task2 = document.getElementById("task2");
 
-  // 檢查 3 個 checkpoint 是否完成
-  const checkpointsDone = 
+  // 檢查 checkpoint 是否完成
+  const checkpointsDone =
     localStorage.getItem("checkpoint-0") === "done" &&
     localStorage.getItem("checkpoint-1") === "done" &&
     localStorage.getItem("checkpoint-2") === "done";
 
-  if(checkpointsDone) task1.textContent = "1. 掃三個 Check Point - OK!";
+  if (checkpointsDone) {
+    task1.textContent = "1. 掃三個 Check Point - OK!";
+  } else {
+    task1.textContent = "1. 掃三個 Check Point";
+  }
 
-  // 檢查留言任務是否完成
-  if(localStorage.getItem("commentDone") === "true") {
+  // 檢查留言是否完成
+  const commentDone = localStorage.getItem("commentDone") === "true";
+  if (commentDone) {
     task2.textContent = "2. 留一次言 - OK!";
+  } else {
+    task2.textContent = "2. 留一次言";
   }
 }
 
-// 開發用：清除 localStorage
+// 清除所有紀錄
 function clearAll() {
   localStorage.clear();
   updateTasks();
   alert("所有紀錄已清除");
 }
 
-// 每秒檢查一次 localStorage 更新
-setInterval(updateTasks, 1000);
+// 每 0.5 秒檢查一次 localStorage
+setInterval(updateTasks, 500);
 updateTasks();
 </script>
 
