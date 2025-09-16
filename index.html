@@ -2,7 +2,7 @@
 <html lang="zh-HK">
 <head>
   <meta charset="UTF-8" />
-  <title>Demo - AR SPA (修正版)</title>
+  <title>Demo</title>
 
   <!-- A-Frame + MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
@@ -64,7 +64,7 @@
 
 <!-- Reward Page -->
 <div id="reward" class="page" style="display:flex;justify-content:center;align-items:center;flex-direction:column;background:#fff;">
-  <h2>獎勵系統</h2>
+  <h2>Reward Page</h2>
   <p id="reward-status">掃描或留言後解鎖！</p>
 </div>
 
@@ -100,14 +100,7 @@ document.getElementById("hamburger").onclick = () => {
 };
 function closeMenu(){ menu.style.left = "-200px"; }
 
-/* -----------------------
-   AR 動態載入 / 卸載
-   -----------------------
-   我哋會：
-   - 動態注入 <a-scene> HTML
-   - 在 initBarrageLogic 時建立 intervals & listeners、並把它們登記到全域變數以便卸載時清理
-   - 卸載時清除 intervals、移除 listeners，並刪除 scene DOM
-*/
+
 
 window._barrageIntervals = [];         // 存 setInterval id
 window._barrageMarkerListeners = [];   // 存 {el, foundHandler, lostHandler}
@@ -318,3 +311,4 @@ goTo("home");
 </script>
 </body>
 </html>
+
