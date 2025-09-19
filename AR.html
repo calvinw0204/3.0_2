@@ -35,7 +35,11 @@
   <a href="reward.html">Reward</a>
 </div>
 
-<a-scene mindar-image="imageTargetSrc: travel-target.mind; autoStart: true;" 
+<a-scene mindar-image="imageTargetSrc: travel-target.mind; autoStart: true;
+                       filterMinCF: 0.0001;
+                       filterBeta: 0.001;
+                       missTolerance: 5;
+                       warmupTolerance: 5"
          vr-mode-ui="enabled: false"
          device-orientation-permission-ui="enabled: true"
          embedded>
@@ -162,7 +166,6 @@ saveBtn.addEventListener("click", () => {
 });
 
 input.addEventListener("keydown", e => { if(e.key === "Enter") saveBtn.click(); });
-
 </script>
 </body>
 </html>
